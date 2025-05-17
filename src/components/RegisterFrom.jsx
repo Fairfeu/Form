@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import React from "react";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { registrationSchema } from "./validationSchema";
 import {
   FormControl,
@@ -12,112 +14,130 @@ import {
 import Modal from "./Modal";
 
 function RegisterForm() {
-  const [formData, setFormData] = useState(null);
-  const [errors, setErrors] = useState({});
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const {
+    register,
+    handleSubmit,
+    control,
+    watch,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(registrationSchema),
+    defaultValues: {
+      login: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+      birthday: "",
+      userGender: "",
+      phone: "",
+    },
+  });
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const [isModalOpen, setIsModalOpen] = React.useState(false);
 
-    const form = new FormData(e.target);
-    const data = Object.fromEntries(form);
-
-    try {
-      const validatedData = registrationSchema.parse(data);
-      setFormData(validatedData);
-      setIsModalOpen(true);
-    } catch (err) {
-      const formattedErrors = err.errors.reduce((acc, error) => {
-        const field = error.path[0];
-        acc[field] = error.message;
-        return acc;
-      }, {});
-
-      setErrors(formattedErrors);
-    }
+  const onSubmit = (data) => {
+    console.log("Форма отправлена:", data);
+    setIsModalOpen(true);
   };
 
   return (
     <div>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit(onSubmit)}>
         <TextField
           label="Login"
           variant="outlined"
-          name="login"
           fullWidth
           margin="normal"
+          {...register("login")}
         />
-        {errors.login && <p style={{ color: "red" }}>{errors.login}</p>}
+        {errors.login && <p style={{ color: "red" }}>{errors.login.message}</p>}
 
         <TextField
           label="Email"
           variant="outlined"
-          name="email"
           fullWidth
           margin="normal"
+          {...register("email")}
         />
-        {errors.email && <p style={{ color: "red" }}>{errors.email}</p>}
+        {errors.email && <p style={{ color: "red" }}>{errors.email.message}</p>}
 
         <TextField
           label="Password"
           variant="outlined"
-          name="password"
           type="password"
           fullWidth
           margin="normal"
+          {...register("password")}
         />
-        {errors.password && <p style={{ color: "red" }}>{errors.password}</p>}
+        {errors.password && (
+          <p style={{ color: "red" }}>{errors.password.message}</p>
+        )}
 
         <TextField
           label="Confirm password"
           variant="outlined"
-          name="confirmPassword"
           type="password"
           fullWidth
           margin="normal"
+          {...register("confirmPassword")}
         />
         {errors.confirmPassword && (
-          <p style={{ color: "red" }}>{errors.confirmPassword}</p>
+          <p style={{ color: "red" }}>{errors.confirmPassword.message}</p>
         )}
 
         <TextField
           label="Date of birth (dd,mm,yyyy)"
           variant="outlined"
-          name="birthday"
           fullWidth
           margin="normal"
+          {...register("birthday")}
         />
-        {errors.birthday && <p style={{ color: "red" }}>{errors.birthday}</p>}
+        {errors.birthday && (
+          <p style={{ color: "red" }}>{errors.birthday.message}</p>
+        )}
 
         <FormControl component="fieldset" margin="normal">
           <FormLabel component="legend">Gender</FormLabel>
-          <RadioGroup
-            row
-            aria-label="gender"
+          <Controller
             name="userGender"
+            control={control}
             defaultValue="female"
-          >
-            <FormControlLabel
-              value="female"
-              control={<Radio />}
-              label="Female"
-            />
-            <FormControlLabel value="male" control={<Radio />} label="Male" />
-          </RadioGroup>
+            render={({ field }) => (
+              <RadioGroup
+                row
+                aria-label="gender"
+                name="userGender"
+                value={field.value}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                ref={field.ref}
+              >
+                <FormControlLabel
+                  value="female"
+                  control={<Radio />}
+                  label="Female"
+                />
+                <FormControlLabel
+                  value="male"
+                  control={<Radio />}
+                  label="Male"
+                />
+              </RadioGroup>
+            )}
+          />
         </FormControl>
         {errors.userGender && (
-          <p style={{ color: "red" }}>{errors.userGender}</p>
+          <p style={{ color: "red" }}>{errors.userGender.message}</p>
         )}
 
         <TextField
           label="Phone number"
           variant="outlined"
-          name="phone"
-          placeholder="+375291234567"
           fullWidth
           margin="normal"
+          {...register("phone")}
         />
-        {errors.phone && <p style={{ color: "red" }}>{errors.phone}</p>}
+        {errors.phone && <p style={{ color: "red" }}>{errors.phone.message}</p>}
 
         <Button type="submit" variant="contained" color="primary">
           Зарегистрироваться
@@ -127,7 +147,7 @@ function RegisterForm() {
       <Modal
         isOpen={isModalOpen}
         closeModal={() => setIsModalOpen(false)}
-        formData={formData}
+        formData={watch()}
       />
     </div>
   );
